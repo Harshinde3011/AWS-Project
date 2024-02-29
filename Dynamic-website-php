@@ -1,0 +1,147 @@
+INSTALL LAMP (Linux, Apache, MySql, Php) STACK ON AWS UBUNTU 22.04
+
+Step-1 
+       Installing Apache on Ubuntu 
+
+       sudo apt-get update -y
+       sudo apt upgrade -y
+       sudo apt install apache2 -y
+
+       sudo ufw app list
+       sudo ufw allow in "Apache Full"
+
+APACHE INSTALLED SUCCSEFULLY YOU CAN VERIFY IT BY ENTERING PUBLIC IP ON BROWSER 
+
+********************************************************************************************************************
+
+Step-2
+      Installing MySQL on same machine
+
+      sudo apt install mysql-server -y
+      sudo mysql_secure_installation 
+      sudo mysql
+      SELECT user, authentication_string, plugin, host FROM mysql.user;
+      ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';  
+     // set root user in mysql and set password 
+      FLUSH PRIVILEGES;
+      exit
+     // To verify root user is set or not just login using "mysql -u root -p" command
+     
+
+MYSQL INSTALLED AND SET UP SUCCESSFULLY 
+
+********************************************************************************************************************
+
+Step-3 
+      Installing php on same machine
+
+      sudo apt install php libapache2-mod-php php-mysql
+
+      sudo nano /etc/apache2/mods-enabled/dir.conf
+      // here u can set prioprity for your files, means your apache server can give first preference to index.php file than index.html for that set below 
+      <IfModule mod_dir.c>
+	    DirectoryIndex index.php index.html index.cgi index.pl index.xhtml index.htm
+	    </IfModule>
+
+      sudo systemctl restart apache2
+
+      sudo apt install php8.1-common php8.1-mysql php8.1-xml php8.1-xmlrpc php8.1-curl php8.1-gd php8.1-imagick php8.1-cli php8.1-dev php8.1-imap php8.1-mbstring php8.1-opcache php8.1-soap php8.1-zip php8.1-intl -y
+      // installing required modules of php, just replace your php version, in my case php version is 8.1 
+
+     // TO TEST YOUR PHP PAGE IS RUNNING OR NOT 
+     // remove apache's default page i.e index.html and add your index.php file and see it by entering your machines PUBLIC IP address aslo make sure that PORT 80 is on your SECURITY GROUP of instance
+
+********************************************************************************************************************
+
+Step-4 
+      Move your websites file form your local machine to instance
+
+      // Install filezilla client on your local machine
+      // open it Go to --> Edit (on top left corner) --> settings
+      // Select SFTP And click on Add key file on browse your .ppk file 
+
+      // Now select File (on top left corner) --> Site Manager --> New Site (give name)--> on right side add Host: PUBLIC IP, Port: 22 and Key file: browse your ppk file(optional) --> connect
+      // then go to particular path of local machine where all your files are located and just drag folder and drop into instance "/var/www/html" path
+
+*********************************************************************************************************************
+
+Step-5 
+      Important Notes - Common Issues during/after PHP Install
+      Configrutions on apache
+
+      cd /etc/apache2/sites-available
+      sudo vi DocumentRoot 000-default.conf
+      DocumentRoot /var/www/html/hospital       
+      // in place of "hospital" you can set your folder name where entire code is present 
+      esc
+      :wq
+
+      sudo a2enmod rewrite
+      sudo systemctl restart apache2
+
+      // see permissions to your php files
+      ls -l /var/www/html/hospital/
+      sudo chmod -R 644 /var/www/html/hospital/*.php
+      sudo chmod -R 755 /var/www/html/hospital
+      // The Apache user is typically www-data on Ubuntu. You can use the chown command to change ownership if necessary:
+      sudo chown -R www-data:www-data /var/www/html/hospital
+      
+-------------------------------------------------------------------------------------------------------
+      sudo nano /etc/apache2/apache2.conf
+      <Directory /var/www/html>
+          Options Indexes FollowSymLinks MultiViews
+          AllowOverride All
+          Require all granted
+      </Directory>
+      
+      sudo a2enmod rewrite
+      sudo service apache2 restart
+
+**********************************************************************************************************
+
+Step-6
+      import .sql on your database
+
+      mysql -h localhost -u root -p  
+      (Enter Password)
+      CREATE DATABASE healthcare;
+      // Give database name according to your desire in my case it is "healthcare"
+      exit
+
+----------------------------------------------------------------------------------
+
+     Now go to 
+     cd /var/www/html/hospital/
+     // where your .sql file is present
+     mysql -u root -p healthcare(database_name) < healthcare.sql(sql_file)
+
+// Never forget to add password on connection.php or the php script where below code is present 
+   <?php
+  $servername = "localhost";
+  $username = "your_mysql_username";
+  $password = "your_mysql_password";
+  $database = "your_database_name";
+  ?>
+
+----------------------------------------------------------------------------------
+
+     login to your mysql database'
+
+     mysql -u root -p
+     // and check whether all your tables are imported or not
+     show databases;
+     use healthcare;
+     show tables;
+     exit
+
+     sudo systemctl restart mysql
+     sudo systemctl restart apache2
+
+**************************************************************************************************************
+
+YOUR SET UP IS UP AND RUNNING JUST USE YOUR PUBLIC IP ADDRESSS AND PASTE ON BROWSER !
+
+      
+      
+
+
